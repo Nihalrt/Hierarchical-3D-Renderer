@@ -1,5 +1,5 @@
 
-# Galactic Odyssey – Interactive Solar System Simulation (CSC 305 Assignment 2)
+# Galactic Odyssey – Interactive Solar System Simulation
 
 This project is a fully interactive 3D solar system scene implemented using WebGL and JavaScript. It was developed as part of the CSC 305 Computer Graphics course at the University of Victoria. The main objective of the assignment was to demonstrate proficiency in hierarchical modeling, real-time rendering, interactive camera control, lighting, and texture mapping, all using WebGL's low-level graphics programming interface.
 

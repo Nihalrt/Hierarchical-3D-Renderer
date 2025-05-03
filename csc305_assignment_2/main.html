@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGL 1.0 Fragment-Based Blinn-Phong (Novel Shader) + Glow</title>
+  </head>
+  <body>
+    <canvas id="gl-canvas" width="512" height="512">
+      Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+    <br/>
+
+    <!-- This vertex shader transforms the position/normal and passes texture coordinates. -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+// Vertex attributes
+attribute vec4 vPosition;
+attribute vec3 vNormal;
+attribute vec4 vColor;  // Must be declared even if unused
+attribute vec2 vTexCoord;
+
+// Varyings to pass data to the fragment shader
+varying vec3 fPosition;
+varying vec3 fNormal;
+varying vec4 passColor;
+varying vec2 fTexCoord;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 normalMatrix;
+uniform mat4 projectionMatrix;
+
+void main() {
+    // Transform vertex position to eye space
+    vec4 posEye = modelViewMatrix * vPosition;
+    fPosition = posEye.xyz;
+    
+    // Transform the normal into eye space
+    fNormal = normalize((normalMatrix * vec4(vNormal, 0.0)).xyz);
+    
+    // Pass along color (if used) and texture coordinates
+    passColor = vColor;
+    fTexCoord = vTexCoord;
+    
+    // Final clip-space position
+    gl_Position = projectionMatrix * posEye;
+}
+    </script>
+
+    <!-- ============= Fragment Shader ============= -->
+    <!-- This fragment shader computes Blinn–Phong lighting per fragment and adds a radial glow
+         only if isSun == 1. -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+// Varying data from the vertex shader
+varying vec3 fPosition;
+varying vec3 fNormal;
+varying vec4 passColor;
+varying vec2 fTexCoord;
+
+// Lighting uniforms
+uniform vec4 ambientProduct;
+uniform vec4 diffuseProduct;
+uniform vec4 specularProduct;
+uniform vec4 lightPosition;
+uniform float shininess;
+
+// Texture uniforms
+uniform sampler2D texture1;
+uniform sampler2D texture2;
+uniform int useTextures;
+
+// NEW: Only glow if isSun == 1
+uniform int isSun;
+
+void main() {
+    // =================== Blinn–Phong Lighting Calculation ===================
+    vec3 N = normalize(fNormal);
+    vec3 L = normalize(lightPosition.xyz - fPosition);
+    vec3 V = normalize(-fPosition);
+    // Halfway vector for Blinn–Phong
+    vec3 H = normalize(L + V);
+
+    // Diffuse term (Lambertian)
+    float diff = max(dot(N, L), 0.0);
+    vec4 diffuse = diffuseProduct * diff;
+
+    // Specular term using Blinn–Phong
+    float spec = 0.0;
+    if (diff > 0.0) {
+        spec = pow(max(dot(N, H), 0.0), shininess);
+    }
+    vec4 specular = specularProduct * spec;
+
+    // Combine ambient, diffuse, and specular
+    vec4 lightingColor = ambientProduct + diffuse + specular;
+
+    // ============== Texture Sampling ==============
+    vec4 texColor;
+    if (useTextures == 1) {
+        texColor = texture2D(texture1, fTexCoord);
+    } else {
+        texColor = texture2D(texture2, fTexCoord);
+    }
+
+    // Basic color from lighting and texture
+    vec4 baseColor = lightingColor * texColor;
+
+    // ============== Novel Glow Effect (Radial Glow) ==============
+    // Only do the glow if isSun == 1
+    if(isSun == 1) {
+        // 1 Compute distance from the center of the texture coordinate space (0.5, 0.5)
+        float dist = length(fTexCoord - vec2(0.5, 0.5));
+        // 2 Invert and clamp that distance to form a glow factor
+        float glowFactor = clamp(1.0 - dist * 2.0, 0.0, 1.0);
+        // 3 Define a glow color (orange-ish), scaled by glowFactor
+        vec4 glowColor = vec4(1.0, 0.7, 0.0, 1.0) * glowFactor * 0.3;
+
+        // Final color is base color plus the glow
+        baseColor += glowColor;
+    }
+
+    gl_FragColor = baseColor;
+}
+    </script>
+
+    <!-- =============== External JS Files =============== -->
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="objects.js"></script>
+    <script type="text/javascript" src="main.js"></script>
+  </body>
+</html>

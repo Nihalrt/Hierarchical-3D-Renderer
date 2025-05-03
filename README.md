@@ -50,10 +50,6 @@ The scene is updated in a continuous loop using `requestAnimationFrame()`, which
 - Moon orbits
 - Decorative rotation for the spaceship or rings
 
-### 7. Audio Integration
-
-A background audio track (`interstellar.mp3`) is embedded into the scene to create an immersive experience. The audio begins playback when the user launches the simulation, utilizing the HTML5 `<audio>` API.
-
 ## File Structure
 
 ```
@@ -98,6 +94,4 @@ This assignment provided valuable experience with:
 - Enhancing visual realism with textures and audio integration.
 - Structuring modular JavaScript code for maintainable graphics applications.
 
-## Acknowledgments
 
-This project was completed for the CSC 305 course at the University of Victoria. All textures and audio assets are used strictly for educational and non-commercial purposes.
